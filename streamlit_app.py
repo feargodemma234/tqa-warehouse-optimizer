@@ -1,77 +1,58 @@
 import streamlit as st
 import pandas as pd
-import io
 from groq import Groq
+import os
 
-st.set_page_config(page_title="TQA Optimizer", layout="centered")
+st.set_page_config(page_title="TQA Warehouse AI", layout="wide")
+st.title("🧠 TQA Warehouse AI Optimizer")
+st.markdown("Upload ANY warehouse CSV. 1 row to infinite rows. AI finds bottlenecks instantly.")
 
-st.title("📦 TQA Warehouse Optimizer")
-st.subheader("Powered by Groq AI - Cut Labor 30%")
+# API Key
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# Setup Groq Client
-client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+uploaded_file = st.file_uploader("⬆️ Upload WMS CSV", type=["csv"])
 
-# SAMPLE CSV TEMPLATE
-sample_data = {
-    'order_id': [1001, 1002, 1003, 1004, 1005],
-    'aisle': [3, 7, 7, 2, 7],
-    'time_min': [4.2, 12.5, 11.8, 3.1, 13.2],
-    'worker': ['Alice', 'Bob', 'Charlie', 'Alice', 'Bob'],
-    'item_count': [5, 8, 6, 4, 9]
-}
-df_sample = pd.DataFrame(sample_data)
-csv_buffer = io.StringIO()
-df_sample.to_csv(csv_buffer, index=False)
-
-st.download_button(
-    label="⬇️ Download Sample CSV Template",
-    data=csv_buffer.getvalue(),
-    file_name="tqa_template.csv",
-    mime="text/csv"
-)
-
-st.divider()
-st.header("1. Upload Today's Data")
-uploaded_file = st.file_uploader("Upload WMS CSV", type=['csv'])
-
-if uploaded_file:
+if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
-    st.success(f"Data received! {len(df)} rows loaded")
-    st.metric("Total Picks Today", f"{len(df):,}")
-    
-    if 'aisle' in df.columns and 'time_min' in df.columns:
-        # SEND TO REAL AI
-        csv_text = df.to_csv(index=False)
-        prompt = f"""You are a warehouse operations expert in Nigeria. 
-        Analyze this data: {csv_text}
-        
-        Return:
-        1. Bottleneck aisle and why
-        2. 3 specific actions to cut labor by 30% today
-        3. Estimate daily savings in USD
-        Keep it under 100 words. Be direct."""
-        
-        with st.spinner("Groq AI is analyzing..."):
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
-            )
-        
-        st.header("🧠 AI Insights")
-        st.write(chat_completion.choices[0].message.content)
-        
-        # Bottleneck calc for alert
-        bottleneck = df.groupby('aisle')['time_min'].mean().idxmax()
-        st.warning(f"🚨 ALERT: Focus on Aisle {bottleneck} in next 30min")
-    else:
-        st.info("Your CSV needs 'aisle' and 'time_min' columns")
-        st.dataframe(df.head())
+    st.success(f"✅ Loaded {len(df)} rows")
+    st.dataframe(df.head(), use_container_width=True)
 
-st.header("2. Optimized Pick Route")
-if st.button("Generate Routes for Workers"):
-    if uploaded_file and 'aisle' in df.columns:
-        top_aisles = df['aisle'].value_counts().head(3).index.tolist()
-        route = " → ".join([f"A{a}" for a in top_aisles])
-        st.success(f"Route 1: {route}. Est time: 22min. 40% faster")
+    # CHECK COLUMNS - THIS IS THE MAGIC
+    required = ['aisle', 'time_min']
+    missing = [col for col in required if col not in df.columns]
+    
+    if missing:
+        st.error(f"❌ Missing columns: {missing}")
+        st.info("Your CSV needs at least: `aisle` and `time_min`. Add other columns like `order_id, worker, shift` for better insights.")
     else:
-        st.info("Upload a CSV first") 
+        st.markdown("### 🧠 AI Insights")
+        
+        # AUTO-ANALYSIS - works on 1 row or 1M rows
+        bottleneck_aisle = df.groupby('aisle')['time_min'].mean().idxmax()
+        avg_time = df.groupby('aisle')['time_min'].mean().max()
+        total_orders = len(df)
+        
+        insight = f"""
+        **Bottleneck Found: Aisle {bottleneck_aisle}**
+        - Avg pick time: {avg_time:.2f} minutes
+        - Total orders analyzed: {total_orders}
+        - **Action 1:** Add more staff to Aisle {bottleneck_aisle} during peak hours
+        - **Action 2:** Pre-stage top moving SKUs in Aisle {bottleneck_aisle}
+        - **Est. Savings:** Reduce pick time by 25%
+        """
+        st.success(insight)
+
+        # GROQ AI SUMMARY
+        if st.button("🤖 Get Full AI Report"):
+            with st.spinner("AI is analyzing..."):
+                summary = df.describe().to_string()
+                chat = client.chat.completions.create(
+                    messages=[{"role": "user", "content": f"Analyze this warehouse data and give 3 actions to cut labor 30%. Data: {summary}"}],
+                    model="llama-3.1-8b-instant",
+                )
+                st.write(chat.choices[0].message.content)
+else:
+    st.info("Upload a CSV to start. Template: aisle, time_min, order_id, worker, shift, item_count")
+
+st.markdown("---")
+st.link_button("📧 Book Free Demo", "mailto:yourname@tqalogistics.com")
