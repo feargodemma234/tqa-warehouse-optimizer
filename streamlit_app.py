@@ -6,10 +6,8 @@ st.set_page_config(page_title="TQA Optimizer", layout="centered")
 st.title("📦 TQA Warehouse Optimizer")
 st.subheader("Cut Labor 30% with AI")
 
-phone = st.text_input("Enter your phone number", placeholder="+234 80...")
-if st.button("Send Login Code"):
-    st.success(f"Code sent to {phone}")
 
+st.info("Welcome to TQA Optimizer. Upload your data below to start.")
 st.divider()
 st.header("1. Upload Today's Data")
 uploaded_file = st.file_uploader("Upload WMS CSV or Take Photo", type=['csv', 'png', 'jpg'])
