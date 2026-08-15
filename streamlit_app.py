@@ -55,4 +55,4 @@ else:
     st.info("Upload a CSV to start. Template: aisle, time_min, order_id, worker, shift, item_count")
 
 st.markdown("---")
-st.link_button("📧 Book Free Demo", "mailto:yourname@tqalogistics.com")
+st.link_button("📧 Book Free Demo", "mailto:"quantumindustries258@gmail.com")
