@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 import pandas as pd
 from groq import Groq
 import os
@@ -55,4 +55,4 @@ else:
     st.info("Upload a CSV to start. Template: aisle, time_min, order_id, worker, shift, item_count")
 
 st.markdown("---")
-st.link_button("📧 Book Free Demo", "mailto:"quantumindustries258@gmail.com")
+st.link_button("📧 Book Free Demo", "mailto:fearGod@tqalogistics.com")
