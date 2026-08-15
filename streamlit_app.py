@@ -74,4 +74,4 @@ if st.button("Generate Routes for Workers"):
         route = " → ".join([f"A{a}" for a in top_aisles])
         st.success(f"Route 1: {route}. Est time: 22min. 40% faster")
     else:
-        st.info("Upload a CSV first") quantumindustries258@gmail.com
+        st.info("Upload a CSV first") 
